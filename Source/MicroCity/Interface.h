@@ -22,8 +22,8 @@ enum BrushTypes
 
 enum
 {
-	SaveLoadToolbarButton = LastBuildingBrush + 1,
-	BudgetToolbarButton
+	BudgetToolbarButton = LastBuildingBrush + 1,
+	SaveLoadToolbarButton
 };
 
 enum

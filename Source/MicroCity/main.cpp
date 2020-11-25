@@ -1,6 +1,4 @@
 #include "Pokitto.h"
-
-#include "Smile.h"
 #include "Game.h"
 #include "Interface.h"
 #include "Generated/Palette.inc.h"
@@ -91,6 +89,11 @@ int main(){
     Pokitto::Display::persistence = true;
     Pokitto::Display::load565Palette(MicroCityPalette);
     //PD::invisiblecolor = 0;
+    
+    while(GetInput() != 0)
+    {
+        pokitto.update();
+    }
     
     InitGame();
 
