@@ -1,6 +1,6 @@
 #pragma once
 
-#if _WIN32
+#if defined(_WIN32) || defined(POKITTO) || defined(POK_SIM)
 #include <stdint.h>
 #include <string.h>
 #define PROGMEM
@@ -17,7 +17,14 @@
 #define TILE_SIZE 8
 #define TILE_SIZE_SHIFT 3
 
-#ifdef _WIN32
+#if defined(POKITTO) || defined(POK_SIM)
+#define DISPLAY_WIDTH (220 / 2)
+#define DISPLAY_HEIGHT (176 / 2)
+//#define DISPLAY_WIDTH (220)
+//#define DISPLAY_HEIGHT (176)
+#define MAP_WIDTH 48
+#define MAP_HEIGHT 48
+#elif defined(_WIN32)
 //#define DISPLAY_WIDTH 192
 //#define DISPLAY_HEIGHT 192
 #define DISPLAY_WIDTH 128
@@ -35,7 +42,7 @@
 #define MAX_SCROLL_X (MAP_WIDTH * TILE_SIZE - DISPLAY_WIDTH)
 #define MAX_SCROLL_Y (MAP_HEIGHT * TILE_SIZE - DISPLAY_HEIGHT)
 
-#define VISIBLE_TILES_X ((DISPLAY_WIDTH / TILE_SIZE) + 1)
+#define VISIBLE_TILES_X ((DISPLAY_WIDTH / TILE_SIZE) + 2)
 #define VISIBLE_TILES_Y ((DISPLAY_HEIGHT / TILE_SIZE) + 1)
 
 #define MAX_BUILDINGS 130
@@ -103,3 +110,24 @@
 #define MAX_TIME_BETWEEN_DISASTERS (FRAMES_PER_YEAR * 6)
 
 #define DISASTER_MESSAGE_DISPLAY_TIME 60
+
+enum
+{
+    COL_BLACK,
+    COL_MAROON,
+    COL_DARKBLUE,
+    COL_DARKGREY,
+    COL_BROWN,
+    COL_DARKGREEN,
+    COL_BRIGHTRED,
+    COL_MIDGREY,
+    COL_LIGHTBLUE,
+    COL_ORANGE,
+    COL_LIGHTGREY,
+    COL_LIGHTGREEN,
+    COL_PINK,
+    COL_CYAN,
+    COL_YELLOW,
+    COL_WHITE
+};
+

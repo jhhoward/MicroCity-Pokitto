@@ -6,10 +6,14 @@
 
 const uint8_t TileImageData[] PROGMEM =
 {
-#include "TileData.h"
+//#include "TileData.h"
+#include "Generated/TileData.inc.h"
 };
 
-#include "LogoBitmap.h"
+const uint8_t LogoBitmap[] =
+{
+#include "Generated/LogoData.inc.h"
+};
 
 // Currently visible tiles are cached so they don't need to be recalculated between frames
 uint8_t VisibleTileCache[VISIBLE_TILES_X * VISIBLE_TILES_Y];
@@ -24,9 +28,11 @@ const uint8_t FireMap[FIREMAP_SIZE] PROGMEM =
 const uint8_t BuildingPopulaceMap[] PROGMEM =
 { 1,0xd,5,0xb,7,0xe,3,4,1,6,0xc,2,0xa,9,0xb,8 };
 
+const uint8_t toolbarColour = COL_WHITE;
+
 const uint8_t* GetTileData(uint8_t tile)
 {
-	return TileImageData + (tile * 8);
+	return TileImageData + (tile * 8 * 8);
 }
 
 inline uint8_t GetProcAtTile(uint8_t x, uint8_t y)
@@ -222,7 +228,7 @@ void ResetVisibleTileCache()
 		}
 	}
 }
-
+ 
 void DrawTiles()
 {
 	int tileX = 0;
@@ -233,6 +239,23 @@ void DrawTiles()
 		int tileY = 0;
 		int offsetY = UIState.scrollY & (TILE_SIZE - 1);
 		uint8_t currentTile = GetCachedTile(tileX, tileY);
+		const uint8_t* tileData = GetTileData(currentTile);
+		
+		for(int row = 0; row < DISPLAY_HEIGHT; row++)
+		{
+		    PutPixel(col, row, tileData[offsetX + TILE_SIZE * offsetY]);
+		    offsetY = (offsetY + 1) & 7;
+
+			if (!offsetY)
+			{
+				tileY++;
+				currentTile = GetCachedTile(tileX, tileY);
+				tileData = GetTileData(currentTile);
+			}
+
+		}
+		
+		/*
 		uint8_t readBuf = pgm_read_byte(&GetTileData(currentTile)[offsetX]);
 		readBuf >>= offsetY;
 
@@ -250,7 +273,8 @@ void DrawTiles()
 				readBuf = pgm_read_byte(&GetTileData(currentTile)[offsetX]);
 			}
 		}
-
+        */
+        
 		offsetX = (offsetX + 1) & 7;
 		if (!offsetX)
 		{
@@ -357,16 +381,19 @@ void ScrollRight(int amount)
 
 void DrawCursorRect(uint8_t cursorDrawX, uint8_t cursorDrawY, uint8_t cursorWidth, uint8_t cursorHeight)
 {
+    uint8_t primaryColour = COL_LIGHTBLUE;
+    uint8_t secondaryColour = COL_DARKBLUE;
+    
 	for (int n = 0; n < cursorWidth; n++)
 	{
-		uint8_t colour = ((n + AnimationFrame) & 4) != 0 ? 1 : 0;
+		uint8_t colour = ((n + AnimationFrame) & 4) != 0 ? primaryColour : secondaryColour;
 		PutPixel(cursorDrawX + n, cursorDrawY + cursorHeight - 1, colour);
 		PutPixel(cursorDrawX + cursorWidth - n - 1, cursorDrawY, colour);
 	}
 
 	for (int n = 0; n < cursorHeight; n++)
 	{
-		uint8_t colour = ((n + AnimationFrame) & 4) != 0 ? 1 : 0;
+		uint8_t colour = ((n + AnimationFrame) & 4) != 0 ? primaryColour : secondaryColour;
 		PutPixel(cursorDrawX, cursorDrawY + n, colour);
 		PutPixel(cursorDrawX + cursorWidth - 1, cursorDrawY + cursorHeight - n - 1, colour);
 	}
@@ -514,15 +541,13 @@ void RefreshBuildingTiles(Building* building)
 
 void DrawTileAt(uint8_t tile, int x, int y)
 {
+    const uint8_t* tileData = GetTileData(tile);
+    
 	for (int col = 0; col < TILE_SIZE; col++)
 	{
-		uint8_t readBuf = pgm_read_byte(&GetTileData(tile)[col]);
-
 		for (int row = 0; row < TILE_SIZE; row++)
 		{
-			uint8_t colour = readBuf & 1;
-			readBuf >>= 1;
-			PutPixel(x + col, y + row, colour);
+			PutPixel(x + col, y + row, tileData[row * TILE_SIZE + col]);
 		}
 	}
 }
@@ -561,8 +586,8 @@ void DrawUI()
 	{
 		uint8_t buttonX = 1;
 
-		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2, NUM_TOOLBAR_BUTTONS * (TILE_SIZE + 1) + 2, TILE_SIZE + 2, 1);
-		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2 - FONT_HEIGHT - 1, DISPLAY_WIDTH / 2 + FONT_WIDTH + 1, FONT_HEIGHT + 2, 1);
+		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2, NUM_TOOLBAR_BUTTONS * (TILE_SIZE + 1) + 2, TILE_SIZE + 2, toolbarColour);
+		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2 - FONT_HEIGHT - 1, 64 + FONT_WIDTH + 1, FONT_HEIGHT + 2, toolbarColour);
 
 		for (int n = 0; n < NUM_TOOLBAR_BUTTONS; n++)
 		{
@@ -594,14 +619,14 @@ void DrawUI()
 		}
 		if (cost > 0)
 		{
-			DrawCurrency(cost, DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - FONT_HEIGHT - TILE_SIZE - 2);
+			DrawCurrency(cost, 64, DISPLAY_HEIGHT - FONT_HEIGHT - TILE_SIZE - 2);
 		}
 	}
 	else if (UIState.state == InGameDisaster)
 	{
 		int strLen = strlen_P(FireReportedStr);
 		int x = DISPLAY_WIDTH / 2 - strLen * (FONT_WIDTH / 2);
-		DrawFilledRect(x - 1, DISPLAY_HEIGHT - TILE_SIZE - 2, 2 + strlen_P(FireReportedStr) * FONT_WIDTH + 2, TILE_SIZE + 2, 1);
+		DrawFilledRect(x - 1, DISPLAY_HEIGHT - TILE_SIZE - 2, 2 + strlen_P(FireReportedStr) * FONT_WIDTH + 2, TILE_SIZE + 2, toolbarColour);
 
 		if (UIState.selection & 4)
 		{
@@ -612,19 +637,19 @@ void DrawUI()
 	{
 		// Current brush at bottom left
 		const char* currentSelection = GetToolbarString(UIState.brush);
-		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2, TILE_SIZE + 2 + strlen_P(currentSelection) * FONT_WIDTH + 2, TILE_SIZE + 2, 1);
+		DrawFilledRect(0, DISPLAY_HEIGHT - TILE_SIZE - 2, TILE_SIZE + 2 + strlen_P(currentSelection) * FONT_WIDTH + 2, TILE_SIZE + 2, toolbarColour);
 		DrawTileAt(FIRST_BRUSH_TILE + UIState.brush, 1, DISPLAY_HEIGHT - TILE_SIZE - 1);
 		DrawString(currentSelection, TILE_SIZE + 2, DISPLAY_HEIGHT - FONT_HEIGHT - 1);
 	}
 
 	// Date at top left
-	DrawFilledRect(0, 0, FONT_WIDTH * 8 + 2, FONT_HEIGHT + 2, 1);
+	DrawFilledRect(0, 0, FONT_WIDTH * 8 + 2, FONT_HEIGHT + 2, toolbarColour);
 	DrawString(GetMonthString(State.month), 1, 1);
 	DrawInt(State.year + 1900, FONT_WIDTH * 4 + 1, 1);
 
 	// Funds at top right
 	uint8_t currencyStrLen = DrawCurrency(State.money, DISPLAY_WIDTH - FONT_WIDTH - 1, 1);
-	DrawRect(DISPLAY_WIDTH - 2 - currencyStrLen * FONT_WIDTH, 0, currencyStrLen * FONT_WIDTH + 2, FONT_HEIGHT + 2, 1);
+	DrawRect(DISPLAY_WIDTH - 2 - currencyStrLen * FONT_WIDTH, 0, currencyStrLen * FONT_WIDTH + 2, FONT_HEIGHT + 2, toolbarColour);
 }
 
 void DrawInGame()
@@ -707,7 +732,7 @@ void DrawSaveLoadMenu()
 	const int menuHeight = 50;
 	const int spacing = 10;
 	DrawRect(DISPLAY_WIDTH / 2 - menuWidth / 2 + 1, DISPLAY_HEIGHT / 2 - menuHeight / 2 + 1, menuWidth, menuHeight, 0);
-	DrawFilledRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, 1);
+	DrawFilledRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, toolbarColour);
 	DrawRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, 0);
 
 	uint8_t y = DISPLAY_HEIGHT / 2 - menuHeight / 2 + spacing / 2 + 2;
@@ -727,15 +752,28 @@ void DrawSaveLoadMenu()
 	DrawString(UIState.autoBudget ? OnStr : OffStr, x + 12 * FONT_WIDTH, y);
 }
 
+void DrawBitmap(const uint8_t *bmp, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+{
+    int index = 0;
+    for(int j = 0; j < h; j++)
+    {
+        for(int i = 0; i < w; i++)
+        {
+            PutPixel(x + i, y + j, bmp[index++]);
+        }
+    }
+}
+
 void DrawStartScreen()
 {
 	const uint8_t logoWidth = 72;
 	const uint8_t logoHeight = 40;
 	const uint8_t logoY = DISPLAY_HEIGHT / 2 - 31;
 	const int spacing = 9;
+	const uint8_t bg = COL_WHITE;
 
-	DrawFilledRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, 1);
-	DrawFilledRect(DISPLAY_WIDTH / 2 - logoWidth / 2, logoY, logoWidth, logoHeight, 0);
+	DrawFilledRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, bg);
+	DrawFilledRect(DISPLAY_WIDTH / 2 - logoWidth / 2, logoY, logoWidth, logoHeight, bg);
 	DrawBitmap(LogoBitmap, DISPLAY_WIDTH / 2 - logoWidth / 2, logoY, logoWidth, logoHeight);
 
 	uint8_t y = logoY + logoHeight - 2;
@@ -751,16 +789,41 @@ void DrawStartScreen()
 	DrawString(TwitterStr, x - FONT_WIDTH * 3, y);
 }
 
+void DrawTerrain(const uint8_t* data, int x, int y, int w, int h)
+{
+	for (int j = 0; j < h; j++)
+	{
+		for (int i = 0; i < w; i++)
+		{
+			int blockX = i / 8;
+			int blockY = j / 8;
+			int blocksPerWidth = w / 8;
+			int blockIndex = blockY * blocksPerWidth + blockX;
+			uint8_t pixels = data[blockIndex * 8 + i % 8];
+			uint8_t mask = 1 << (j % 8);
+			if (pixels & mask)
+			{
+				PutPixel(x + i, y + j, COL_ORANGE);
+			}
+			else
+			{
+			    PutPixel(x + i, y + j, COL_LIGHTBLUE);
+			}
+		}
+	}
+}
+
 const char LeftArrowStr[] PROGMEM = "<";
 const char RightArrowStr[] PROGMEM = ">";
 
 void DrawNewCityMenu()
 {
+    const uint8_t bg = COL_WHITE;
 	const uint8_t mapY = DISPLAY_HEIGHT / 2 - MAP_HEIGHT / 2 - 4;
-	DrawFilledRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, 1);
+	DrawFilledRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, bg);
 
 	DrawFilledRect(DISPLAY_WIDTH / 2 - MAP_WIDTH / 2, mapY, MAP_WIDTH, MAP_HEIGHT, 0);
-	DrawBitmap(GetTerrainData(State.terrainType), DISPLAY_WIDTH / 2 - MAP_WIDTH / 2, mapY, MAP_WIDTH, MAP_HEIGHT);
+	DrawTerrain(GetTerrainData(State.terrainType), DISPLAY_WIDTH / 2 - MAP_WIDTH / 2, mapY, MAP_WIDTH, MAP_HEIGHT);
 	DrawRect(DISPLAY_WIDTH / 2 - MAP_WIDTH / 2 - 2, mapY - 2, MAP_WIDTH + 4, MAP_HEIGHT + 4, 0);
 
 	DrawString(GetTerrainDescription(State.terrainType), DISPLAY_WIDTH / 2 - FONT_WIDTH * 3, mapY + MAP_HEIGHT + 5);
@@ -782,7 +845,7 @@ void DrawBudgetMenu()
 	const int menuHeight = 56;
 	const int spacing = FONT_HEIGHT + 1;
 	DrawRect(DISPLAY_WIDTH / 2 - menuWidth / 2 + 1, DISPLAY_HEIGHT / 2 - menuHeight / 2 + 1, menuWidth, menuHeight, 0);
-	DrawFilledRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, 1);
+	DrawFilledRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, toolbarColour);
 	DrawRect(DISPLAY_WIDTH / 2 - menuWidth / 2, DISPLAY_HEIGHT / 2 - menuHeight / 2, menuWidth, menuHeight, 0);
 
 	uint8_t y = DISPLAY_HEIGHT / 2 - menuHeight / 2 + 2;

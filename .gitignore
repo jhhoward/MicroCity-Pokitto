@@ -1,0 +1,6 @@
+Source/Windows/MicroCity/x64/
+Source/Windows/MicroCity/.vs/
+Source/Windows/AssetGen/x64/
+Source/Windows/MicroCity/Debug/
+Source/Windows/AssetGen/Debug/
+Source/Windows/AssetGen/AssetGen.vcxproj.filters

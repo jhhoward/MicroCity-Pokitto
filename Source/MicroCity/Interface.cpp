@@ -196,7 +196,7 @@ void HandleInput(uint8_t input)
 	else if (UIState.state == SaveLoadMenu)
 	{
 		WrapMenuInput(input, 4);
-		if (input & (INPUT_A))
+		if (input & (INPUT_A | INPUT_START))
 		{
 			UIState.state = InGame;
 		}
@@ -232,6 +232,12 @@ void HandleInput(uint8_t input)
 		{
 			UIState.state = ShowingToolbar;
 			UIState.selection = UIState.brush;
+		}
+		
+		if (input & INPUT_START)
+		{
+			UIState.state = SaveLoadMenu;
+			UIState.selection = 0;
 		}
 
 		if (input & INPUT_B)
@@ -368,7 +374,7 @@ void HandleInput(uint8_t input)
 			{
 				State.taxRate++;
 			}
-			if (input & (INPUT_A | INPUT_B))
+			if (input & (INPUT_A | INPUT_B | INPUT_START))
 			{
 				UIState.state = InGame;
 			}

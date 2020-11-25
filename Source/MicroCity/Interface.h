@@ -9,6 +9,7 @@
 #define INPUT_DOWN 8
 #define INPUT_A 16
 #define INPUT_B 32
+#define INPUT_START 64
 
 enum BrushTypes
 {
