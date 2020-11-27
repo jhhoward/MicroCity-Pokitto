@@ -1,9 +1,13 @@
 #include "Pokitto.h"
 #include "Game.h"
 #include "Interface.h"
+#include "Font.h"
 #include "Generated/Palette.inc.h"
+#include <File>
 
 Pokitto::Core pokitto;
+const char* saveGameName = "MICROCITY.SAV";
+const char saveHeader[4] = { 'C', 'T', 'Y', '1' };
 
 uint8_t GetInput()
 {
@@ -45,35 +49,35 @@ void PutPixel(uint8_t x, uint8_t y, uint8_t colour)
 {
     Pokitto::Display::drawPixel(x, y, colour);
 }
- 
+
 void SaveCity()
 {
-    fileOpen("city.sav", FILE_MODE_READWRITE);
-    
-    if(fileOK() == 0)
+    File file;
+    if(file.openRW(saveGameName, true, false))
     {
-        fileSetPosition(0);
-        
-        fileWriteBytes((uint8_t*)&State, sizeof(GameState));
-    
-        fileClose();
+        file.write(saveHeader, 4);
+        file.write(&State, sizeof(GameState));
     }
 }
 
 bool LoadCity()
 {
-    fileOpen("city.sav", FILE_MODE_READWRITE);
-
-    if(fileOK() != 0)
+    File file;
+    if(file.openRO(saveGameName))
     {
-        return false;
+        char readHeader[4];
+        file.read(readHeader, 4);
+        for(int n = 0; n < 4; n++)
+        {
+            if(readHeader[n] != saveHeader[n])
+            {
+                return false;
+            }
+        }
+        file.read(&State, sizeof(GameState));
+        return true;
     }
-    
-    fileSetPosition(0);
-    uint16_t bytesRead = fileReadBytes((uint8_t*)&State, sizeof(GameState));
-    fileClose();
-    
-    return bytesRead == sizeof(GameState);
+    return false;
 }
 
 static uint8_t buffer[100];
@@ -83,13 +87,17 @@ uint8_t* GetPowerGrid()
     return buffer;
 }
 
+uint8_t* GetScreenBuffer(void)
+{
+    return (uint8_t*) Pokitto::Display::getBuffer();
+}
+
 
 int main(){
     pokitto.begin();
     Pokitto::Display::persistence = true;
     Pokitto::Display::load565Palette(MicroCityPalette);
-    //PD::invisiblecolor = 0;
-    
+
     while(GetInput() != 0)
     {
         pokitto.update();

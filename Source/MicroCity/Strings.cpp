@@ -27,8 +27,8 @@ const char* const ToolbarStrings[] PROGMEM =
 	PoliceDeptStr,
 	FireDeptStr,
 	StadiumStr,
-	SaveLoadStr,
 	BudgetStr,
+	SaveLoadStr,
 };
 
 const char* GetToolbarString(int index)

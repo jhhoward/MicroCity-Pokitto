@@ -48,6 +48,8 @@ void TickGame(void);
 void SaveCity(void);
 bool LoadCity(void);
 
+uint8_t* GetScreenBuffer(void);
+
 void FocusTile(uint8_t x, uint8_t y);
 
 

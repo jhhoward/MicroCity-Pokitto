@@ -3,12 +3,16 @@
 #if defined(_WIN32) || defined(POKITTO) || defined(POK_SIM)
 #include <stdint.h>
 #include <string.h>
+
+#ifndef pgm_read_byte
 #define PROGMEM
 #define PSTR
 #define pgm_read_byte(x) (*((uint8_t*)x))
 #define pgm_read_word(x) (*((uint16_t*)x))
 #define pgm_read_ptr(x) (*((uintptr_t*)x))
 #define strlen_P(x) strlen(x)
+#endif
+
 #else
 #include <avr/pgmspace.h>
 //#define pgm_read_ptr pgm_read_word
@@ -45,7 +49,7 @@
 #define VISIBLE_TILES_X ((DISPLAY_WIDTH / TILE_SIZE) + 2)
 #define VISIBLE_TILES_Y ((DISPLAY_HEIGHT / TILE_SIZE) + 1)
 
-#define MAX_BUILDINGS 130
+#define MAX_BUILDINGS 200
 
 // How long a button has to be held before the first event repeats
 #define INPUT_REPEAT_TIME 10

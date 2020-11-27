@@ -231,56 +231,88 @@ void ResetVisibleTileCache()
  
 void DrawTiles()
 {
-	int tileX = 0;
-	int offsetX = UIState.scrollX & (TILE_SIZE - 1);
-
-	for (int col = 0; col < DISPLAY_WIDTH; col++)
-	{
-		int tileY = 0;
-		int offsetY = UIState.scrollY & (TILE_SIZE - 1);
-		uint8_t currentTile = GetCachedTile(tileX, tileY);
-		const uint8_t* tileData = GetTileData(currentTile);
-		
-		for(int row = 0; row < DISPLAY_HEIGHT; row++)
-		{
-		    PutPixel(col, row, tileData[offsetX + TILE_SIZE * offsetY]);
-		    offsetY = (offsetY + 1) & 7;
-
-			if (!offsetY)
-			{
-				tileY++;
-				currentTile = GetCachedTile(tileX, tileY);
-				tileData = GetTileData(currentTile);
-			}
-
-		}
-		
-		/*
-		uint8_t readBuf = pgm_read_byte(&GetTileData(currentTile)[offsetX]);
-		readBuf >>= offsetY;
-
-		for (int row = 0; row < DISPLAY_HEIGHT; row++)
-		{
-			PutPixel(col, row, readBuf & 1);
-
-			offsetY = (offsetY + 1) & 7;
-			readBuf >>= 1;
-
-			if (!offsetY)
-			{
-				tileY++;
-				currentTile = GetCachedTile(tileX, tileY);
-				readBuf = pgm_read_byte(&GetTileData(currentTile)[offsetX]);
-			}
-		}
-        */
+    constexpr bool useDirectBufferWrite = true;
+    
+    if(useDirectBufferWrite)
+    {
+        uint8_t* screenPtr = GetScreenBuffer();
+    	int tileY = 0;
+    	int offsetY = UIState.scrollY & (TILE_SIZE - 1);
         
-		offsetX = (offsetX + 1) & 7;
-		if (!offsetX)
-		{
-			tileX++;
-		}
-	}
+        for(int row = 0; row < DISPLAY_HEIGHT; row++)
+        {
+        	int tileX = 0;
+        	int offsetX = UIState.scrollX & (TILE_SIZE - 1);
+    		uint8_t currentTile = GetCachedTile(tileX, tileY);
+    		const uint8_t* tileData = GetTileData(currentTile);
+        	
+            for(int col = 0; col < DISPLAY_WIDTH; col += 2)
+            {
+                uint8_t pixelPair = tileData[offsetX + TILE_SIZE * offsetY] << 4;
+
+    		    offsetX = (offsetX + 1) & 7;
+    			if (!offsetX)
+    			{
+    				tileX++;
+    				currentTile = GetCachedTile(tileX, tileY);
+    				tileData = GetTileData(currentTile);
+    			}
+                
+                pixelPair |= tileData[offsetX + TILE_SIZE * offsetY];
+
+    		    offsetX = (offsetX + 1) & 7;
+    			if (!offsetX)
+    			{
+    				tileX++;
+    				currentTile = GetCachedTile(tileX, tileY);
+    				tileData = GetTileData(currentTile);
+    			}
+    			
+    			*screenPtr = pixelPair;
+    			screenPtr++;
+            }
+    
+    	    offsetY = (offsetY + 1) & 7;
+    
+    		if (!offsetY)
+    		{
+    			tileY++;
+    		}
+        }
+    }
+    else
+    {
+    	int tileX = 0;
+    	int offsetX = UIState.scrollX & (TILE_SIZE - 1);
+    
+    	for (int col = 0; col < DISPLAY_WIDTH; col++)
+    	{
+    		int tileY = 0;
+    		int offsetY = UIState.scrollY & (TILE_SIZE - 1);
+    		uint8_t currentTile = GetCachedTile(tileX, tileY);
+    		const uint8_t* tileData = GetTileData(currentTile);
+    		
+    		for(int row = 0; row < DISPLAY_HEIGHT; row++)
+    		{
+    		    PutPixel(col, row, tileData[offsetX + TILE_SIZE * offsetY]);
+    		    offsetY = (offsetY + 1) & 7;
+    
+    			if (!offsetY)
+    			{
+    				tileY++;
+    				currentTile = GetCachedTile(tileX, tileY);
+    				tileData = GetTileData(currentTile);
+    			}
+    
+    		}
+    		
+    		offsetX = (offsetX + 1) & 7;
+    		if (!offsetX)
+    		{
+    			tileX++;
+    		}
+    	}
+    }
 }
 
 void ScrollUp(int amount)

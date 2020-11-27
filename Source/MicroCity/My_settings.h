@@ -71,7 +71,7 @@
 
 // Enable streaming music from SD
 // Optional. Comment to disable.
-#define PROJ_ENABLE_SD_MUSIC
+//#define PROJ_ENABLE_SD_MUSIC
 
 
 // Defines the rate your audio has been encoded with.
@@ -92,8 +92,6 @@
 // Optional. Default is PokittoDisk (PFFS).
 // #define PROJ_SDFS_STREAMING
 // #define PROJ_FILE_STREAMING
-
-#define POK_ENABLE_SD 1
 
 // Enable Synth
 // Optional. Can be 0 or 1. Default is 0.
