@@ -80,11 +80,10 @@ bool LoadCity()
     return false;
 }
 
-static uint8_t buffer[100];
-
 uint8_t* GetPowerGrid()
 {
-    return buffer;
+    // Just use display buffer as a temporary scratch space for power grid flood fill
+    return (uint8_t*) Pokitto::Display::getBuffer();
 }
 
 uint8_t* GetScreenBuffer(void)
